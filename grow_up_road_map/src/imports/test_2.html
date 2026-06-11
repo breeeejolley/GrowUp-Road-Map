@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Up Bank Interactive Roadmap</title>
+    <style>
+        /* Typography & Variables */
+        @import url('https://googleapis.com');
+
+        :root {
+            /* Primitive Palette */
+            --brand-midnight: #242430;
+            --brand-sunset: #FF7A64;
+            --brand-sunrise: #FFF06B;
+            --brand-pink: #FF8BB5;
+            --brand-blue: #4E6280;
+            --brand-green: #305555;
+            --brand-sometimes-blue: #3FA8F4;
+
+            /* Core Semantics */
+            --primary: var(--brand-sunset);
+            --accent: var(--brand-pink);
+            --bg-color: var(--brand-midnight);
+            --bg-darker: #1A1A22;
+            --surface: #FFFFFF;
+
+            /* Typography */
+            --font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --titles-huge: 30px;
+            --body: 16px;
+
+            /* Spacing & Borders */
+            --card: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: rgba(255, 255, 255, 0.98);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: var(--titles-huge);
+            font-weight: 400;
+            line-height: 36px;
+            letter-spacing: -0.5px;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Map Container */
+        #map-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 650px;
+            background: var(--bg-darker);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--card);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Roads */
+        .road {
+            position: absolute;
+            background-color: var(--brand-blue);
+            z-index: 1;
+            background-repeat: repeat;
+        }
+
+        .road.horizontal {
+            height: 30px;
+            background-image: repeating-linear-gradient(90deg, transparent 0, transparent 12px, #6C7A93 12px, #6C7A93 22px, transparent 22px);
+        }
+
+        .road.vertical {
+            width: 30px;
+            background-image: repeating-linear-gradient(0deg, transparent 0, transparent 12px, #6C7A93 12px, #6C7A93 22px, transparent 22px);
+        }
+
+        /* Animation Directions */
+        .road.right { animation: move-right 1.5s linear infinite; }
+        .road.left { animation: move-left 1.5s linear infinite; }
+        .road.up { animation: move-up 1.5s linear infinite; }
+        .road.down { animation: move-down 1.5s linear infinite; }
+
+        @keyframes move-right { from { background-position: 0 0; } to { background-position: 34px 0; } }
+        @keyframes move-left { from { background-position: 0 0; } to { background-position: -34px 0; } }
+        @keyframes move-up { from { background-position: 0 0; } to { background-position: 0 -34px; } }
+        @keyframes move-down { from { background-position: 0 0; } to { background-position: 0 34px; } }
+        
+        /* Static Background Elements */
+        .background-element {
+            position: absolute;
+            z-index: 0;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        #soccer-field { top: 80px; left: 200px; width: 120px; height: 80px; border: 2px dashed var(--border-color); }
+        #roundabout { bottom: 80px; right: 150px; width: 100px; height: 100px; border: 15px solid #3e4c63; border-radius: 50%; }
+
+        /* The Stops */
+        .stop {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: var(--brand-sunrise);
+            border: 4px solid var(--brand-midnight);
+            border-radius: 50%;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .stop:hover { transform: scale(1.2); background-color: var(--brand-pink); }
+        .stop-label { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--brand-midnight); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .stop:hover .stop-label { opacity: 1; }
+
+        /* The Figure (Car) */
+        #car { position: absolute; width: 40px; height: 40px; background-color: var(--brand-sunset); border-radius: 8px; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 20px; pointer-events: none; transition: left 0.1s linear, top 0.1s linear; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); transform: translate(-50%, -50%); }
+        #car::after { content: '🚗'; }
+
+        /* Expandable Prompt / Modal */
+        #modal { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 500px; background-color: #FFFFFF; color: var(--brand-midnight); padding: 20px; border-radius: var(--card); z-index: 20; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); border-left: 6px solid var(--brand-sunset); }
+        #modal.active { display: block; animation: popIn 0.3s ease-out; }
+        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 20px; cursor: pointer; color: var(--brand-midnight); opacity: 0.6; }
+        .close-btn:hover { opacity: 1; }
+        @keyframes popIn { from { transform: translate(-50%, 20%) scale(0.95); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <h1>Your UpTown Roadmap</h1>
+    <div id="map-container">
+        <!-- Background Elements -->
+        <div id="soccer-field" class="background-element"></div>
+        <div id="roundabout" class="background-element"></div>
+
+        <!-- Main Drivable Roads with Directional Animation -->
+        <!-- Start -> School -->
+        <div class="road horizontal right" style="left: 100px; top: 500px; width: 265px;"></div>
+        <!-- School -> Library -->
+        <div class="road vertical up" style="left: 350px; top: 200px; height: 320px;"></div>
+        <div class="road horizontal right" style="left: 350px; top: 200px; width: 350px;"></div>
+        <!-- Library -> Supermarket -->
+        <div class="road vertical down" style="left: 700px; top: 215px; height: 235px;"></div>
+        <!-- Supermarket -> Clothes Store -->
+        <div class="road horizontal left" style="left: 465px; top: 450px; width: 235px;"></div>
+        <!-- Clothes Store -> Bank -->
+        <div class="road vertical up" style="left: 450px; top: 300px; height: 165px;"></div>
+        <div class="road horizontal left" style="left: 200px; top: 300px; width: 250px;"></div>
+
+        <!-- Stops -->
+        <div class="stop" style="left: 80px; top: 492.5px;" onclick="showInfo('Start Point', 'You are starting your Up Bank journey here! Follow the road to see what\'s next.')">🏁<div class="stop-label">Start</div></div>
+        <div class="stop" style="left: 342.5px; top: 492.5px;" onclick="showInfo('School', 'Learn how to manage your daily expenses and build a solid financial foundation.')">🏫<div class="stop-label">School</div></div>
+        <div class="stop" style="left: 692.5px; top: 192.5px;" onclick="showInfo('Library', 'Research new ways to save and study up on your savings goals.')">📚<div class="stop-label">Library</div></div>
+        <div class="stop" style="left: 692.5px; top: 442.5px;" onclick="showInfo('Supermarket', 'Keep track of your weekly groceries and essential living expenses.')">🛒<div class="stop-label">Supermarket</div></div>
+        <div class="stop" style="left: 442.5px; top: 442.5px;" onclick="showInfo('Clothes Store', 'Set up dedicated Savers for those fun lifestyle purchases.')">👕<div class="stop-label">Clothes Store</div></div>
+        <div class="stop" style="left: 182.5px; top: 292.5px;" onclick="showInfo('Bank', 'You reached your destination! Your Up Bank account aggregates everything you\'ve learned.')">🏦<div class="stop-label">Bank / End</div></div>
+
+        <!-- The Figure (Car) -->
+        <div id="car"></div>
+
+        <!-- Expandable Prompt -->
+        <div id="modal">
+            <span class="close-btn" onclick="closeInfo()">&times;</span>
+            <h2 id="modal-title">Title</h2>
+            <p id="modal-desc">Description</p>
+        </div>
+    </div>
+    <p style="margin-top: 1rem; color: rgba(255,255,255,0.47);">Move your mouse across the map to guide the car through the maze.</p>
+    <script>
+        const mapContainer = document.getElementById('map-container');
+        const car = document.getElementById('car');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+
+        mapContainer.addEventListener('mousemove', (e) => {
+            const rect = mapContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                car.style.left = x + 'px';
+                car.style.top = y + 'px';
+            }
+        });
+
+        function showInfo(title, desc) {
+            modalTitle.innerText = title;
+            modalDesc.innerText = desc;
+            modal.classList.add('active');
+            event.stopPropagation();
+        }
+
+        function closeInfo() {
+            modal.classList.remove('active');
+        }
+
+        mapContainer.addEventListener('click', () => closeInfo());
+    </script>
+</body>
+</html>
